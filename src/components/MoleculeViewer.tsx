@@ -4,7 +4,8 @@ import { useEffect, useRef } from "react";
 import type { Bead } from "@/types/molecule";
 
 type MoleculeViewerProps = {
-  pdbText: string;
+  modelText: string;
+  format: "pdb" | "sdf";
   selected: number[];
   beads: Bead[];
   onToggleSelect: (serial: number) => void;
@@ -21,7 +22,8 @@ const SELECTED_STYLE = {
 };
 
 export default function MoleculeViewer({
-  pdbText,
+  modelText,
+  format,
   selected,
   beads,
   onToggleSelect,
@@ -40,7 +42,7 @@ export default function MoleculeViewer({
 
   // Build the viewer whenever the molecule changes.
   useEffect(() => {
-    if (!containerRef.current || !pdbText) return;
+    if (!containerRef.current || !modelText) return;
 
     let cancelled = false;
 
@@ -55,7 +57,7 @@ export default function MoleculeViewer({
       viewerRef.current = viewer;
 
       viewer.clear();
-      viewer.addModel(pdbText, "pdb");
+      viewer.addModel(modelText, format);
 
       // Clicking any atom toggles its selection.
       viewer.setClickable({}, true, (atom: any) => {
@@ -79,7 +81,7 @@ export default function MoleculeViewer({
         viewerRef.current = null;
       }
     };
-  }, [pdbText]);
+  }, [modelText, format]);
 
   // Re-style / redraw beads when selection or beads change.
   useEffect(() => {

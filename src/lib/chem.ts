@@ -1,4 +1,4 @@
-import type { Atom } from "@/types/molecule";
+import type { Atom, ExplicitBond } from "@/types/molecule";
 
 // Lightweight cheminformatics: infer bonds from 3D geometry (covalent radii),
 // perceive rings, and detect functional groups so bead suggestions can account
@@ -46,7 +46,11 @@ export type Bonds = {
   symbol: Map<number, string>;
 };
 
-export function inferBonds(atoms: Atom[]): Bonds {
+export function inferBonds(atoms: Atom[], explicit?: ExplicitBond[]): Bonds {
+  if (explicit && explicit.length > 0) {
+    return bondsFromExplicit(atoms, explicit);
+  }
+
   const adj = new Map<number, number[]>();
   const double = new Set<string>();
   const symbol = new Map<number, string>();
@@ -85,6 +89,33 @@ export function inferBonds(atoms: Atom[]): Bonds {
 
   const ringBond = computeRingBonds(adj);
   const aromatic = computeAromatic(adj, double, ringBond, symbol);
+  return { adj, double, ringBond, aromatic, symbol };
+}
+
+// Build Bonds from known connectivity (SMILES/RDKit): bond orders and
+// aromaticity are exact, so no geometric inference is needed.
+function bondsFromExplicit(atoms: Atom[], explicit: ExplicitBond[]): Bonds {
+  const adj = new Map<number, number[]>();
+  const double = new Set<string>();
+  const symbol = new Map<number, string>();
+  const aromatic = new Set<number>();
+  for (const a of atoms) {
+    adj.set(a.serial, []);
+    symbol.set(a.serial, elementSymbol(a));
+  }
+
+  for (const bond of explicit) {
+    if (!adj.has(bond.a) || !adj.has(bond.b)) continue;
+    adj.get(bond.a)!.push(bond.b);
+    adj.get(bond.b)!.push(bond.a);
+    if (bond.order >= 2 || bond.aromatic) double.add(key(bond.a, bond.b));
+    if (bond.aromatic) {
+      aromatic.add(bond.a);
+      aromatic.add(bond.b);
+    }
+  }
+
+  const ringBond = computeRingBonds(adj);
   return { adj, double, ringBond, aromatic, symbol };
 }
 

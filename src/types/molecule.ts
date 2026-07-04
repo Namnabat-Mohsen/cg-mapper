@@ -14,6 +14,15 @@ export type Atom = {
 
 import type { BeadSize } from "@/lib/beads";
 
+// An explicit chemical bond (from SMILES / RDKit), when connectivity is known
+// rather than inferred from geometry.
+export type ExplicitBond = {
+  a: number; // atom serial
+  b: number; // atom serial
+  order: number; // 1, 2, 3 (aromatic encoded via `aromatic`)
+  aromatic: boolean;
+};
+
 // A coarse-grained bead groups one or more all-atom atoms.
 // Atoms may be shared across beads (e.g. ring mappings in Martini).
 export type Bead = {
