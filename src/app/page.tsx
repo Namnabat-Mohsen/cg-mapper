@@ -4,10 +4,9 @@ import { useState, useCallback, useMemo, type ChangeEvent } from "react";
 import MoleculeViewer from "@/components/MoleculeViewer";
 import MappingTable from "@/components/MappingTable";
 import ExportPanel from "@/components/ExportPanel";
-import MdRunPanel from "@/components/MdRunPanel";
-import ParametrizePanel from "@/components/ParametrizePanel";
 import SuggestionCard from "@/components/SuggestionCard";
 import MartiniReference from "@/components/MartiniReference";
+import AppHeader from "@/components/AppHeader";
 import Stepper, { type StepDef } from "@/components/Stepper";
 import { parsePDB } from "@/lib/pdbParser";
 import { geometricCenter } from "@/lib/geometry";
@@ -23,16 +22,15 @@ import {
 import { suggestBead } from "@/lib/suggest";
 import { inferBonds } from "@/lib/chem";
 import { smilesToMolecule } from "@/lib/smiles";
-import type { FittedParams } from "@/lib/itp";
 import type { Atom, Bead, ExplicitBond } from "@/types/molecule";
 
 const STEPS: StepDef[] = [
   { id: 1, label: "Load" },
   { id: 2, label: "Map beads" },
   { id: 3, label: "Export" },
-  { id: 4, label: "Reference MD" },
-  { id: 5, label: "Parametrize" },
 ];
+
+const SECTION = "rounded-2xl border border-neutral-800 bg-neutral-900/70 p-6";
 
 export default function Home() {
   const [fileName, setFileName] = useState<string>("");
@@ -43,7 +41,6 @@ export default function Home() {
     undefined
   );
   const [smilesInput, setSmilesInput] = useState<string>("");
-  const [sourceSmiles, setSourceSmiles] = useState<string>("");
   const [smilesError, setSmilesError] = useState<string>("");
   const [smilesLoading, setSmilesLoading] = useState<boolean>(false);
   const [selected, setSelected] = useState<number[]>([]);
@@ -53,13 +50,11 @@ export default function Home() {
   const [pendingType, setPendingType] = useState<string>(DEFAULT_BEAD_TYPE);
   const [showReference, setShowReference] = useState(false);
   const [step, setStep] = useState(1);
-  const [fitted, setFitted] = useState<FittedParams | undefined>(undefined);
 
   function resetForNewMolecule() {
     setSelected([]);
     setBeads([]);
     setBeadCounter(1);
-    setFitted(undefined);
     setStep(2);
   }
 
@@ -73,7 +68,6 @@ export default function Home() {
     setModelFormat("pdb");
     setAtoms(parsePDB(text));
     setExplicitBonds(undefined);
-    setSourceSmiles("");
     resetForNewMolecule();
   }
 
@@ -90,7 +84,6 @@ export default function Home() {
       setModelFormat(format);
       setAtoms(parsedAtoms);
       setExplicitBonds(bonds);
-      setSourceSmiles(smiles);
       resetForNewMolecule();
     } catch {
       setSmilesError(
@@ -160,43 +153,57 @@ export default function Home() {
   const maxReachable = loaded ? STEPS.length : 1;
 
   return (
-    <main className="min-h-screen bg-neutral-950 text-white">
-      <div className="mx-auto max-w-6xl px-6 py-10">
-        <h1 className="text-3xl font-bold">CG Molecule Mapper</h1>
-        <p className="mt-3 max-w-2xl text-neutral-300">
-          Map an all-atom molecule to Martini 3 beads, export the topology, and
-          refine bonded parameters from a reference simulation — one step at a
-          time.
-        </p>
+    <main className="min-h-screen bg-neutral-950 text-neutral-100">
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-64 opacity-60"
+        style={{
+          background:
+            "radial-gradient(60% 100% at 50% 0%, rgba(20,184,166,0.10), transparent 70%)",
+        }}
+      />
+      <div className="relative mx-auto max-w-6xl px-6 py-10">
+        <AppHeader onOpenReference={() => setShowReference(true)} />
 
-        <Stepper
-          steps={STEPS}
-          current={step}
-          maxReachable={maxReachable}
-          onSelect={setStep}
-        />
+        <div className="mt-8 rounded-2xl border border-neutral-800 bg-neutral-900/70 px-5 py-4">
+          <Stepper
+            steps={STEPS}
+            current={step}
+            maxReachable={maxReachable}
+            onSelect={setStep}
+          />
+        </div>
 
         {/* Step 1 — Load */}
         {step === 1 && (
-          <section className="mt-6 rounded-2xl border border-neutral-800 bg-neutral-900 p-6">
-            <h2 className="text-xl font-semibold">Load AA molecule</h2>
-            <div className="mt-4 grid gap-6 md:grid-cols-2">
-              <div>
-                <p className="text-sm font-medium text-neutral-300">
+          <section className={`mt-6 ${SECTION}`}>
+            <h2 className="text-xl font-semibold">Load an all-atom molecule</h2>
+            <p className="mt-1 text-sm text-neutral-400">
+              Start from a PDB file or a SMILES string.
+            </p>
+            <div className="mt-5 grid gap-6 md:grid-cols-2">
+              <div className="rounded-xl border border-neutral-800 bg-neutral-950/40 p-4">
+                <p className="text-sm font-medium text-neutral-200">
                   Option A — PDB file
+                </p>
+                <p className="mt-1 text-xs text-neutral-500">
+                  All-atom coordinates; bonds inferred from geometry.
                 </p>
                 <input
                   type="file"
                   accept=".pdb"
                   onChange={handleFileUpload}
-                  className="mt-2 block w-full cursor-pointer rounded-lg border border-neutral-700 bg-neutral-950 p-3 text-sm text-neutral-300"
+                  className="mt-3 block w-full cursor-pointer rounded-lg border border-neutral-700 bg-neutral-950 p-3 text-sm text-neutral-300 file:mr-3 file:rounded file:border-0 file:bg-neutral-800 file:px-3 file:py-1 file:text-neutral-200"
                 />
               </div>
-              <div>
-                <p className="text-sm font-medium text-neutral-300">
+
+              <div className="rounded-xl border border-neutral-800 bg-neutral-950/40 p-4">
+                <p className="text-sm font-medium text-neutral-200">
                   Option B — SMILES string
                 </p>
-                <div className="mt-2 flex gap-2">
+                <p className="mt-1 text-xs text-neutral-500">
+                  Built with RDKit (real bonds + aromaticity, 3D embedded).
+                </p>
+                <div className="mt-3 flex gap-2">
                   <input
                     type="text"
                     value={smilesInput}
@@ -210,7 +217,7 @@ export default function Home() {
                   <button
                     onClick={handleLoadSmiles}
                     disabled={smilesLoading || smilesInput.trim() === ""}
-                    className="shrink-0 rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-500 disabled:cursor-not-allowed disabled:bg-neutral-700 disabled:opacity-60"
+                    className="shrink-0 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-500 disabled:cursor-not-allowed disabled:bg-neutral-700 disabled:opacity-60"
                   >
                     {smilesLoading ? "Loading…" : "Load"}
                   </button>
@@ -221,7 +228,7 @@ export default function Home() {
                     <button
                       key={s}
                       onClick={() => setSmilesInput(s)}
-                      className="mr-2 font-mono text-sky-400 hover:underline"
+                      className="mr-2 font-mono text-teal-400 hover:underline"
                     >
                       {s}
                     </button>
@@ -238,10 +245,9 @@ export default function Home() {
               </p>
             )}
             {atoms.length > 0 && (
-              <p className="mt-2 text-sm text-green-400">
-                Parsed {atoms.length} atoms
-                {explicitBonds ? ` and ${explicitBonds.length} bonds` : ""}{" "}
-                successfully.
+              <p className="mt-2 text-sm text-emerald-400">
+                ✓ Parsed {atoms.length} atoms
+                {explicitBonds ? ` and ${explicitBonds.length} bonds` : ""}.
               </p>
             )}
           </section>
@@ -250,7 +256,7 @@ export default function Home() {
         {/* Step 2 — Map beads */}
         {step === 2 && loaded && (
           <>
-            <section className="mt-6 rounded-2xl border border-neutral-800 bg-neutral-900 p-6">
+            <section className={`mt-6 ${SECTION}`}>
               <div className="mb-4 flex items-start justify-between gap-4">
                 <div>
                   <h2 className="text-xl font-semibold">Select atoms</h2>
@@ -281,21 +287,13 @@ export default function Home() {
               />
             </section>
 
-            <section className="mt-6 rounded-2xl border border-neutral-800 bg-neutral-900 p-6">
-              <div className="mb-4 flex items-start justify-between gap-4">
-                <div>
-                  <h2 className="text-xl font-semibold">CG beads</h2>
-                  <p className="mt-1 text-sm text-neutral-400">
-                    {assignedCount} of {totalAtoms} atoms assigned to{" "}
-                    {beads.length} bead{beads.length === 1 ? "" : "s"}.
-                  </p>
-                </div>
-                <button
-                  onClick={() => setShowReference(true)}
-                  className="shrink-0 rounded-lg border border-neutral-700 px-3 py-2 text-sm text-neutral-200 hover:bg-neutral-800"
-                >
-                  📖 Martini 3 reference
-                </button>
+            <section className={`mt-6 ${SECTION}`}>
+              <div className="mb-4">
+                <h2 className="text-xl font-semibold">CG beads</h2>
+                <p className="mt-1 text-sm text-neutral-400">
+                  {assignedCount} of {totalAtoms} atoms assigned to{" "}
+                  {beads.length} bead{beads.length === 1 ? "" : "s"}.
+                </p>
               </div>
 
               <div className="flex flex-wrap items-end gap-3 rounded-xl border border-neutral-800 bg-neutral-950/40 p-4">
@@ -331,7 +329,7 @@ export default function Home() {
                     ))}
                   </select>
                 </label>
-                <span className="pb-1.5 font-mono text-sm text-neutral-300">
+                <span className="pb-1.5 font-mono text-sm text-teal-300">
                   = {pendingSize === "R" ? "" : pendingSize}
                   {pendingType}
                 </span>
@@ -360,7 +358,7 @@ export default function Home() {
               />
             </section>
 
-            <section className="mt-6 rounded-2xl border border-neutral-800 bg-neutral-900 p-6">
+            <section className={`mt-6 ${SECTION}`}>
               <h2 className="text-xl font-semibold">Atom list</h2>
               <div className="mt-4 overflow-x-auto">
                 <table className="w-full border-collapse text-sm">
@@ -451,7 +449,7 @@ export default function Home() {
 
         {/* Step 3 — Export */}
         {step === 3 && loaded && (
-          <section className="mt-6 rounded-2xl border border-neutral-800 bg-neutral-900 p-6">
+          <section className={`mt-6 ${SECTION}`}>
             <h2 className="text-xl font-semibold">Export</h2>
             <p className="mt-1 mb-4 text-sm text-neutral-400">
               Save the mapping (JSON), the coarse-grained structure (PDB / GRO),
@@ -462,45 +460,6 @@ export default function Home() {
               bonds={bonds}
               atomCount={atoms.length}
               fileName={fileName}
-              fitted={fitted}
-            />
-          </section>
-        )}
-
-        {/* Step 4 — Reference MD */}
-        {step === 4 && loaded && (
-          <section className="mt-6 rounded-2xl border border-neutral-800 bg-neutral-900 p-6">
-            <h2 className="text-xl font-semibold">
-              Reference MD (for parametrization)
-            </h2>
-            <p className="mt-1 mb-4 text-sm text-neutral-400">
-              Generate the files and steps to run a short all-atom simulation,
-              whose trajectory you upload in the next step.
-            </p>
-            <MdRunPanel
-              atoms={atoms}
-              fileName={fileName}
-              sourceSmiles={sourceSmiles}
-            />
-          </section>
-        )}
-
-        {/* Step 5 — Parametrize */}
-        {step === 5 && loaded && (
-          <section className="mt-6 rounded-2xl border border-neutral-800 bg-neutral-900 p-6">
-            <h2 className="text-xl font-semibold">
-              Parametrize from trajectory
-            </h2>
-            <p className="mt-1 mb-4 text-sm text-neutral-400">
-              Upload the reference trajectory (multi-model PDB). Each frame is
-              mapped to your beads and the bonded parameters are fitted by
-              Boltzmann inversion; the Export step&apos;s .itp then uses them.
-            </p>
-            <ParametrizePanel
-              atoms={atoms}
-              beads={beads}
-              bonds={bonds}
-              onFitted={setFitted}
             />
           </section>
         )}
@@ -517,11 +476,17 @@ export default function Home() {
           <button
             onClick={() => setStep((s) => Math.min(STEPS.length, s + 1))}
             disabled={step === STEPS.length || (step === 1 && !loaded)}
-            className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-500 disabled:cursor-not-allowed disabled:bg-neutral-700 disabled:opacity-40"
+            className="rounded-lg bg-teal-600 px-5 py-2 text-sm font-medium text-white hover:bg-teal-500 disabled:cursor-not-allowed disabled:bg-neutral-700 disabled:opacity-40"
           >
             Next →
           </button>
         </div>
+
+        <footer className="mt-12 border-t border-neutral-800 pt-6 text-center text-xs text-neutral-500">
+          CG-Mapper — manual all-atom → Martini 3 coarse-grained mapping.
+          Suggestions and topology are starting points to validate, not a
+          substitute for parametrization.
+        </footer>
       </div>
 
       <MartiniReference
