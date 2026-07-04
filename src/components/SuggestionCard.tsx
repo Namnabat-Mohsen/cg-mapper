@@ -1,11 +1,11 @@
 "use client";
 
-import type { Suggestion } from "@/lib/suggest";
+import type { Suggestion, SuggestionResult, BeadCandidate } from "@/lib/suggest";
 import { examplesForType } from "@/lib/martiniExamples";
 import StructureThumb from "@/components/StructureThumb";
 
 type SuggestionCardProps = {
-  suggestion: Suggestion | null;
+  result: SuggestionResult | null;
   onUse: (size: Suggestion["size"], type: string) => void;
 };
 
@@ -15,12 +15,9 @@ const CONFIDENCE_STYLE: Record<Suggestion["confidence"], string> = {
   low: "bg-amber-500/10 text-amber-300",
 };
 
-export default function SuggestionCard({
-  suggestion,
-  onUse,
-}: SuggestionCardProps) {
-  if (!suggestion) return null;
-
+export default function SuggestionCard({ result, onUse }: SuggestionCardProps) {
+  if (!result) return null;
+  const { primary, alternatives } = result;
   const {
     size,
     type,
@@ -31,7 +28,7 @@ export default function SuggestionCard({
     warnings,
     detected,
     profile,
-  } = suggestion;
+  } = primary;
   const examples = examplesForType(type);
 
   return (
@@ -56,7 +53,7 @@ export default function SuggestionCard({
           onClick={() => onUse(size, type)}
           className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-500"
         >
-          Use suggestion ({label})
+          Use {label}
         </button>
       </div>
 
@@ -88,6 +85,27 @@ export default function SuggestionCard({
         </div>
       )}
 
+      {alternatives.length > 0 && (
+        <div className="mt-4 border-t border-indigo-800/40 pt-3">
+          <p className="text-sm text-indigo-200">Other candidates</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {alternatives.map((alt: BeadCandidate) => (
+              <button
+                key={alt.label + alt.variant}
+                onClick={() => onUse(alt.size, alt.type)}
+                title={`Use ${alt.label}`}
+                className="group flex items-center gap-2 rounded-lg border border-neutral-700 bg-neutral-950/50 px-3 py-1.5 text-sm hover:border-indigo-500 hover:bg-indigo-950/40"
+              >
+                <span className="font-mono text-white">{alt.label}</span>
+                <span className="text-xs text-neutral-400 group-hover:text-indigo-200">
+                  {alt.variant}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {warnings.length > 0 && (
         <ul className="mt-3 space-y-1 text-sm text-amber-300">
           {warnings.map((w, i) => (
@@ -99,13 +117,13 @@ export default function SuggestionCard({
       {examples && (
         <div className="mt-4 border-t border-indigo-800/40 pt-3">
           <p className="text-sm text-indigo-200">
-            Representative {examples.className} examples (Martini 3)
+            Representative {examples.className} examples
           </p>
           <p className="mt-0.5 text-xs text-indigo-300/70">
             {examples.description}
           </p>
           <div className="mt-3 flex flex-wrap gap-3">
-            {examples.examples.map((ex) => (
+            {examples.examples.slice(0, 4).map((ex) => (
               <div
                 key={ex.name}
                 className="w-32 rounded-lg border border-neutral-800 bg-neutral-950/60 p-2 text-center"
@@ -126,8 +144,8 @@ export default function SuggestionCard({
       )}
 
       <p className="mt-3 text-xs text-neutral-500">
-        Heuristic guide based on Martini 3 mapping rules — examples are
-        illustrative; review before applying.
+        Heuristic guide based on Martini 3 mapping principles — candidates and
+        examples are illustrative; review before applying.
       </p>
     </div>
   );

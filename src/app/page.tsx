@@ -19,7 +19,7 @@ import {
   beadRadiusForSize,
   type BeadSize,
 } from "@/lib/beads";
-import { suggestBead } from "@/lib/suggest";
+import { suggestCandidates } from "@/lib/suggest";
 import { inferBonds } from "@/lib/chem";
 import { smilesToMolecule } from "@/lib/smiles";
 import type { Atom, Bead, ExplicitBond } from "@/types/molecule";
@@ -143,8 +143,8 @@ export default function Home() {
     [atoms, explicitBonds]
   );
 
-  const suggestion = useMemo(
-    () => suggestBead(atoms, bonds, new Set(selected)),
+  const suggestionResult = useMemo(
+    () => suggestCandidates(atoms, bonds, new Set(selected)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [selected, atoms, bonds]
   );
@@ -344,7 +344,7 @@ export default function Home() {
 
               {selected.length > 0 && (
                 <SuggestionCard
-                  suggestion={suggestion}
+                  result={suggestionResult}
                   onUse={(size, type) => {
                     setPendingSize(size);
                     setPendingType(type);

@@ -156,3 +156,84 @@ export function suggestBead(
     profile: a,
   };
 }
+
+// ---- Multiple ranked candidates ----
+
+export type BeadCandidate = {
+  size: BeadSize;
+  type: string;
+  label: string;
+  variant: string; // short tag describing this alternative
+};
+
+export type SuggestionResult = {
+  primary: Suggestion;
+  alternatives: BeadCandidate[];
+};
+
+const CLASS_RANGE: Record<string, number> = { P: 6, N: 6, C: 6, Q: 5, X: 4 };
+
+export function suggestCandidates(
+  atoms: Atom[],
+  bonds: Bonds,
+  selected: Set<number>
+): SuggestionResult | null {
+  const primary = suggestBead(atoms, bonds, selected);
+  if (!primary) return null;
+  const a = primary.profile;
+  const cls = primary.type.charAt(0);
+  const num = parseInt(primary.type.slice(1), 10) || 0;
+  const has = (g: string) => a.groups.includes(g);
+
+  const alts: BeadCandidate[] = [];
+  const seen = new Set<string>([`${primary.size}${primary.type}`]);
+  const add = (
+    type: string,
+    variant: string,
+    size: BeadSize = primary.size
+  ) => {
+    const key = `${size}${type}`;
+    if (seen.has(key) || alts.length >= 5) return;
+    seen.add(key);
+    alts.push({ size, type, label: beadLabel(size, type), variant });
+  };
+
+  // Polarity neighbours within the class.
+  const range = CLASS_RANGE[cls];
+  if (range && num) {
+    if (num + 1 <= range) add(`${cls}${num + 1}`, "more polar");
+    if (num - 1 >= 1) add(`${cls}${num - 1}`, "less polar");
+  }
+
+  // H-bond donor / acceptor labels (Martini 3 sub-labels).
+  if (!a.charged && cls !== "C" && cls !== "X") {
+    if (a.donor && a.acceptor) add(`${primary.type}da`, "H-bond donor+acceptor");
+    else if (a.donor) add(`${primary.type}d`, "H-bond donor");
+    else if (a.acceptor) add(`${primary.type}a`, "H-bond acceptor");
+  }
+
+  // Class alternatives on borderline chemistry.
+  if (cls === "N") add(`P${clamp(num, 1, 6)}`, "if more polar (P)");
+  if (
+    cls === "P" &&
+    !a.charged &&
+    (has("ether") || has("carbonyl") || has("ester"))
+  )
+    add(`N${clamp(num, 1, 6)}`, "if less polar (N)");
+  if (aromaticOnlyCarbon(a)) add("C6", "alt aromatic (C6)");
+
+  // (De)protonation → charged alternatives.
+  if (has("carboxyl")) add("Q5", "if deprotonated (carboxylate)");
+  if (has("amine")) add("Q4", "if protonated (ammonium)");
+
+  // Size alternative when the heavy-atom count is borderline.
+  if (a.heavy === 4) add(primary.type, "tighter packing (Small)", "S");
+  if (a.heavy === 3) add(primary.type, "regular size (R)", "R");
+  if (a.heavy === 2) add(primary.type, "small size (S)", "S");
+
+  return { primary, alternatives: alts };
+}
+
+function aromaticOnlyCarbon(a: Analysis): boolean {
+  return a.aromatic && a.O === 0 && a.N === 0;
+}
