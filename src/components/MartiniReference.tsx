@@ -1,11 +1,7 @@
 "use client";
 
-import {
-  ALL_CLASSES,
-  SIZE_REFERENCE,
-  LABEL_REFERENCE,
-} from "@/lib/martiniExamples";
-import StructureThumb from "@/components/StructureThumb";
+import { SIZE_REFERENCE, LABEL_REFERENCE } from "@/lib/martiniExamples";
+import { BUILDING_BLOCK_CLASSES, BUILDING_BLOCKS } from "@/lib/martiniBuildingBlocks";
 
 type MartiniReferenceProps = {
   open: boolean;
@@ -33,9 +29,9 @@ export default function MartiniReference({
               Martini 3 bead reference
             </h2>
             <p className="mt-1 text-sm text-neutral-400">
-              Bead sizes, chemical classes with all subtypes, and label
-              conventions. Example molecules are illustrative — see the Martini 3
-              papers for definitive assignments.
+              Bead sizes, sub-label conventions, and the building-block table:
+              every bead subtype with example molecules and their CG mapping
+              ({BUILDING_BLOCKS.length} entries).
             </p>
           </div>
           <button
@@ -65,11 +61,9 @@ export default function MartiniReference({
             ))}
           </div>
           <p className="mt-2 text-xs text-neutral-500">
-            Prefix the type with the size: e.g.{" "}
-            <span className="font-mono">P2</span> (Regular),{" "}
-            <span className="font-mono">SP2</span> (Small),{" "}
-            <span className="font-mono">TP2</span> (Tiny). Within a class a higher
-            number = more polar.
+            Prefix the type with the size: <span className="font-mono">P2</span>{" "}
+            (Regular), <span className="font-mono">SP2</span> (Small),{" "}
+            <span className="font-mono">TP2</span> (Tiny).
           </p>
         </section>
 
@@ -84,58 +78,55 @@ export default function MartiniReference({
                 key={l.id}
                 className="rounded-lg border border-neutral-800 bg-neutral-950/60 px-3 py-1.5 text-xs text-neutral-300"
               >
-                <span className="font-mono text-white">{l.id}</span> —{" "}
-                {l.meaning}
+                <span className="font-mono text-white">{l.id}</span> — {l.meaning}
               </span>
             ))}
           </div>
         </section>
 
-        {/* Classes */}
-        <section className="mt-6 space-y-5">
+        {/* Building-block table */}
+        <section className="mt-6 space-y-6">
           <h3 className="text-sm font-semibold text-neutral-200">
-            Chemical classes (charged → apolar)
+            Building-block table (bead subtype → example molecule → CG mapping)
           </h3>
-          {ALL_CLASSES.map((cls) => (
+          {BUILDING_BLOCK_CLASSES.map((group) => (
             <div
-              key={cls.key}
+              key={group.cls}
               className="rounded-xl border border-neutral-800 bg-neutral-950/40 p-4"
             >
-              <div className="font-medium text-white">{cls.className}</div>
-              <div className="mt-0.5 text-sm text-neutral-400">
-                {cls.description}
-              </div>
-              <div className="mt-1 text-xs text-neutral-500">{cls.polarity}</div>
-
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {cls.subtypes.map((st) => (
-                  <span
-                    key={st.label}
-                    title={st.note}
-                    className="rounded-md border border-neutral-700 bg-neutral-900 px-2 py-1 font-mono text-xs text-neutral-100"
-                  >
-                    {st.label}
-                  </span>
-                ))}
-              </div>
-
-              <div className="mt-3 flex flex-wrap gap-3">
-                {cls.examples.map((ex) => (
-                  <div
-                    key={ex.name}
-                    className="w-32 rounded-lg border border-neutral-800 bg-neutral-950/60 p-2 text-center"
-                  >
-                    <div className="flex justify-center">
-                      <StructureThumb smiles={ex.smiles} />
-                    </div>
-                    <div className="mt-1 text-xs font-medium text-neutral-100">
-                      {ex.name}
-                    </div>
-                    <div className="text-[11px] leading-tight text-neutral-400">
-                      {ex.maps}
-                    </div>
-                  </div>
-                ))}
+              <div className="font-medium text-white">{group.className}</div>
+              <div className="mt-3 overflow-x-auto">
+                <table className="w-full border-collapse text-sm">
+                  <thead>
+                    <tr className="border-b border-neutral-800 text-left text-neutral-500">
+                      <th className="py-1.5 pr-4">Type</th>
+                      <th className="py-1.5 pr-4">Example molecule</th>
+                      <th className="py-1.5 pr-4">CG mapping</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {group.types.flatMap((t) =>
+                      t.examples.map((ex, i) => (
+                        <tr
+                          key={t.type + ex.name}
+                          className="border-b border-neutral-900 text-neutral-200"
+                        >
+                          <td className="py-1.5 pr-4 align-top">
+                            {i === 0 ? (
+                              <span className="rounded bg-neutral-800 px-1.5 py-0.5 font-mono text-xs text-white">
+                                {t.type}
+                              </span>
+                            ) : null}
+                          </td>
+                          <td className="py-1.5 pr-4 align-top">{ex.name}</td>
+                          <td className="py-1.5 pr-4 align-top font-mono text-xs text-neutral-400">
+                            {ex.mapping}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           ))}

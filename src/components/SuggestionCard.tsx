@@ -1,8 +1,7 @@
 "use client";
 
 import type { Suggestion, SuggestionResult, BeadCandidate } from "@/lib/suggest";
-import { examplesForType } from "@/lib/martiniExamples";
-import StructureThumb from "@/components/StructureThumb";
+import { blocksForType } from "@/lib/martiniBuildingBlocks";
 
 type SuggestionCardProps = {
   result: SuggestionResult | null;
@@ -29,7 +28,7 @@ export default function SuggestionCard({ result, onUse }: SuggestionCardProps) {
     detected,
     profile,
   } = primary;
-  const examples = examplesForType(type);
+  const blocks = blocksForType(type);
 
   return (
     <div className="mt-4 rounded-xl border border-indigo-800/50 bg-indigo-950/30 p-4">
@@ -114,29 +113,24 @@ export default function SuggestionCard({ result, onUse }: SuggestionCardProps) {
         </ul>
       )}
 
-      {examples && (
+      {blocks.length > 0 && (
         <div className="mt-4 border-t border-indigo-800/40 pt-3">
           <p className="text-sm text-indigo-200">
-            Representative {examples.className} examples
+            Building-block examples ({type} class)
           </p>
-          <p className="mt-0.5 text-xs text-indigo-300/70">
-            {examples.description}
-          </p>
-          <div className="mt-3 flex flex-wrap gap-3">
-            {examples.examples.slice(0, 4).map((ex) => (
+          <div className="mt-2 space-y-1">
+            {blocks.map((b) => (
               <div
-                key={ex.name}
-                className="w-32 rounded-lg border border-neutral-800 bg-neutral-950/60 p-2 text-center"
+                key={b.type + b.name}
+                className="flex flex-wrap items-baseline gap-x-2 text-sm"
               >
-                <div className="flex justify-center">
-                  <StructureThumb smiles={ex.smiles} />
-                </div>
-                <div className="mt-1 text-xs font-medium text-neutral-100">
-                  {ex.name}
-                </div>
-                <div className="text-[11px] leading-tight text-neutral-400">
-                  {ex.maps}
-                </div>
+                <span className="rounded bg-neutral-800 px-1.5 py-0.5 font-mono text-xs text-white">
+                  {b.type}
+                </span>
+                <span className="text-neutral-200">{b.name}</span>
+                <span className="font-mono text-xs text-neutral-500">
+                  {b.mapping}
+                </span>
               </div>
             ))}
           </div>
