@@ -2,6 +2,8 @@
 
 import { SIZE_REFERENCE, LABEL_REFERENCE } from "@/lib/martiniExamples";
 import { BUILDING_BLOCK_CLASSES, BUILDING_BLOCKS } from "@/lib/martiniBuildingBlocks";
+import { smilesForName } from "@/lib/moleculeSmiles";
+import StructureThumb from "@/components/StructureThumb";
 
 type MartiniReferenceProps = {
   open: boolean;
@@ -100,30 +102,41 @@ export default function MartiniReference({
                   <thead>
                     <tr className="border-b border-neutral-800 text-left text-neutral-500">
                       <th className="py-1.5 pr-4">Type</th>
+                      <th className="py-1.5 pr-4">Structure</th>
                       <th className="py-1.5 pr-4">Example molecule</th>
                       <th className="py-1.5 pr-4">CG mapping</th>
                     </tr>
                   </thead>
                   <tbody>
                     {group.types.flatMap((t) =>
-                      t.examples.map((ex, i) => (
-                        <tr
-                          key={t.type + ex.name}
-                          className="border-b border-neutral-900 text-neutral-200"
-                        >
-                          <td className="py-1.5 pr-4 align-top">
-                            {i === 0 ? (
-                              <span className="rounded bg-neutral-800 px-1.5 py-0.5 font-mono text-xs text-white">
-                                {t.type}
-                              </span>
-                            ) : null}
-                          </td>
-                          <td className="py-1.5 pr-4 align-top">{ex.name}</td>
-                          <td className="py-1.5 pr-4 align-top font-mono text-xs text-neutral-400">
-                            {ex.mapping}
-                          </td>
-                        </tr>
-                      ))
+                      t.examples.map((ex, i) => {
+                        const smiles = smilesForName(ex.name);
+                        return (
+                          <tr
+                            key={t.type + ex.name}
+                            className="border-b border-neutral-900 text-neutral-200"
+                          >
+                            <td className="py-1.5 pr-4 align-middle">
+                              {i === 0 ? (
+                                <span className="rounded bg-neutral-800 px-1.5 py-0.5 font-mono text-xs text-white">
+                                  {t.type}
+                                </span>
+                              ) : null}
+                            </td>
+                            <td className="py-1.5 pr-4 align-middle">
+                              {smiles ? (
+                                <StructureThumb smiles={smiles} size={64} />
+                              ) : (
+                                <span className="text-neutral-700">—</span>
+                              )}
+                            </td>
+                            <td className="py-1.5 pr-4 align-middle">{ex.name}</td>
+                            <td className="py-1.5 pr-4 align-middle font-mono text-xs text-neutral-400">
+                              {ex.mapping}
+                            </td>
+                          </tr>
+                        );
+                      })
                     )}
                   </tbody>
                 </table>

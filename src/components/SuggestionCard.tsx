@@ -2,6 +2,8 @@
 
 import type { Suggestion, SuggestionResult, BeadCandidate } from "@/lib/suggest";
 import { blocksForType } from "@/lib/martiniBuildingBlocks";
+import { smilesForName } from "@/lib/moleculeSmiles";
+import StructureThumb from "@/components/StructureThumb";
 
 type SuggestionCardProps = {
   result: SuggestionResult | null;
@@ -118,21 +120,37 @@ export default function SuggestionCard({ result, onUse }: SuggestionCardProps) {
           <p className="text-sm text-indigo-200">
             Building-block examples ({type} class)
           </p>
-          <div className="mt-2 space-y-1">
-            {blocks.map((b) => (
-              <div
-                key={b.type + b.name}
-                className="flex flex-wrap items-baseline gap-x-2 text-sm"
-              >
-                <span className="rounded bg-neutral-800 px-1.5 py-0.5 font-mono text-xs text-white">
-                  {b.type}
-                </span>
-                <span className="text-neutral-200">{b.name}</span>
-                <span className="font-mono text-xs text-neutral-500">
-                  {b.mapping}
-                </span>
-              </div>
-            ))}
+          <div className="mt-2 flex flex-wrap gap-3">
+            {blocks.map((b) => {
+              const smiles = smilesForName(b.name);
+              return (
+                <div
+                  key={b.type + b.name}
+                  className="w-36 rounded-lg border border-neutral-800 bg-neutral-950/60 p-2"
+                >
+                  <div className="flex justify-center">
+                    {smiles ? (
+                      <StructureThumb smiles={smiles} size={96} />
+                    ) : (
+                      <div className="flex h-24 items-center justify-center text-xs text-neutral-600">
+                        no structure
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-1 flex items-center gap-1.5">
+                    <span className="rounded bg-neutral-800 px-1.5 py-0.5 font-mono text-[11px] text-white">
+                      {b.type}
+                    </span>
+                    <span className="truncate text-xs text-neutral-200" title={b.name}>
+                      {b.name}
+                    </span>
+                  </div>
+                  <div className="mt-0.5 truncate font-mono text-[10px] text-neutral-500" title={b.mapping}>
+                    {b.mapping}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
