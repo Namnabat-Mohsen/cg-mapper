@@ -2,6 +2,8 @@
 
 /* eslint-disable @next/next/no-img-element */
 
+import { withBasePath } from "@/lib/basePath";
+
 type AppHeaderProps = {
   onOpenReference: () => void;
 };
@@ -11,7 +13,7 @@ export default function AppHeader({ onOpenReference }: AppHeaderProps) {
     <header className="overflow-hidden rounded-2xl bg-gradient-to-br from-white to-slate-100 px-6 py-6 shadow-sm ring-1 ring-black/5">
       <div className="flex flex-col items-center gap-5 sm:flex-row sm:justify-between">
         <img
-          src="/logo.png"
+          src={withBasePath("/logo.png")}
           alt="CG-Mapper — coarse-grained molecule mapping tool"
           className="h-32 w-auto object-contain sm:h-36"
         />

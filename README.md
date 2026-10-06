@@ -56,6 +56,31 @@ npm run build
 npm start
 ```
 
+## Public GitHub Pages deployment
+
+The repository includes `.github/workflows/deploy-pages.yml`. It builds a
+browser-only static export and publishes it whenever `main` is updated. For
+this repository, the public URL is:
+
+```text
+https://namnabat-mohsen.github.io/cg-mapper/
+```
+
+Enable it once in the repository settings:
+
+1. Open **Settings → Pages**.
+2. Under **Build and deployment**, set **Source** to **GitHub Actions**.
+3. Push this project to `main`, or run **Deploy to GitHub Pages** manually from
+   the **Actions** tab.
+
+The Pages build automatically configures the repository base path, including
+when the repository is renamed. Local development remains unchanged and still
+uses `npm run dev`.
+
+GitHub Pages serves only the browser application. It cannot run Python,
+GROMACS, or another local backend. RDKit is loaded from a public CDN when a
+user first loads a SMILES structure, so that feature requires internet access.
+
 RDKit (used for SMILES) is loaded on demand from a CDN at runtime, so SMILES
 input needs an internet connection the first time it is used.
 

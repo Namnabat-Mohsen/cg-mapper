@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { withBasePath } from "@/lib/basePath";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -16,7 +17,7 @@ export const metadata: Metadata = {
   title: "CG-Mapper — all-atom → Martini 3 mapping",
   description:
     "Map an all-atom molecule to Martini 3 coarse-grained beads and export the mapping, CG structure, and topology.",
-  icons: { icon: "/logo.png" },
+  icons: { icon: withBasePath("/logo.png") },
 };
 
 export default function RootLayout({
